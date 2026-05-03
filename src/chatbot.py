@@ -15,6 +15,7 @@ collection = client.get_collection(
     name="support_faqs"
 )
 
+chat_history = []
 
 def search_knowledge_base(query, top_k=2):
     # Convert query into vector
@@ -63,11 +64,31 @@ while True:
 
     if user_query.lower() in ["exit", "quit"]:
         break
+    
+    # Store user message
+    chat_history.append(f"User: {user_query}")
 
+    # Retrieve FAQ context
     retrieved_docs = search_knowledge_base(user_query)
 
-    context = "\n".join(retrieved_docs)
+    faq_context = "\n".join(retrieved_docs)
 
-    answer = ask_llm(context, user_query)
+    # Keep recent conversation only ( last 6 conversations )
+    memory_context = "\n".join(chat_history[-6:])
+
+    # Combine FAQ + conversation memory
+    full_context = f"""
+
+    FAQ Context:
+    {faq_context}
+
+    Conversation History:
+    {memory_context}
+    """     
+
+    answer = ask_llm(full_context, user_query)
 
     print("\nBot:", answer)
+
+    # Store bot response
+    chat_history.append(f"Bot: {answer}")
