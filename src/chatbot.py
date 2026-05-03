@@ -1,5 +1,5 @@
 import json
-import faiss
+import chromadb
 import numpy as np
 import requests
 from sentence_transformers import SentenceTransformer
@@ -7,24 +7,26 @@ from sentence_transformers import SentenceTransformer
 # Load embedding model
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-# Load FAISS index
-index = faiss.read_index("../data/faiss_index.bin")
+# Connect to Chroma
+client = chromadb.PersistentClient(path="../db")
 
-# Load stored documents
-with open("../data/documents.json", "r") as f:
-    documents = json.load(f)
+# Load collection
+collection = client.get_collection(
+    name="support_faqs"
+)
 
 
 def search_knowledge_base(query, top_k=2):
-    query_embedding = model.encode([query])
+    # Convert query into vector
+    query_embedding = model.encode([query]).tolist()
 
-    distances, indices = index.search(
-        np.array(query_embedding).astype("float32"),
-        top_k
+    # Search Chroma
+    results = collection.query(
+        query_embeddings=query_embedding,
+        n_results=top_k
     )
 
-    results = [documents[i] for i in indices[0]]
-    return results
+    return results["documents"][0]
 
 
 def ask_llm(context, question):

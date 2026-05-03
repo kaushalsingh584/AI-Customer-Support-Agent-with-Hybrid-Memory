@@ -1,5 +1,5 @@
 import json
-import faiss
+import chromadb
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
@@ -17,20 +17,21 @@ documents = [
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
 # Generate embeddings
-embeddings = model.encode(documents)
+embeddings = model.encode(documents).tolist()
 
-# Create FAISS index
-dimension = embeddings.shape[1]
-index = faiss.IndexFlatL2(dimension)
+# Create persistent Chroma DB
+client = chromadb.PersistentClient(path="../db")
 
-# Add embeddings
-index.add(np.array(embeddings).astype("float32"))
+# Create collection
+collection = client.get_or_create_collection(
+    name="support_faqs"
+)
 
-# Save index
-faiss.write_index(index, "../data/faiss_index.bin")
-
-# Save documents separately
-with open("../data/documents.json", "w") as f:
-    json.dump(documents, f)
+# Store data
+collection.add(
+    documents=documents,
+    embeddings=embeddings,
+    ids=[str(i) for i in range(len(documents))]
+)
 
 print("Knowledge base created successfully!")
