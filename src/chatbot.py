@@ -1,8 +1,11 @@
 import json
+import re
 import chromadb
 import numpy as np
 import requests
 from sentence_transformers import SentenceTransformer
+
+from tools import track_order
 
 # Load embedding model
 model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -64,6 +67,26 @@ while True:
 
     if user_query.lower() in ["exit", "quit"]:
         break
+
+    # Tool detection for order tracking
+    if "ORD" in user_query.upper():
+        words = user_query.split()
+
+    order_id = None
+
+    match = re.search(r'ORD\d+', user_query.upper())
+
+    if match:
+        order_id = match.group()
+        print("requested order id:"+order_id)
+        result = track_order(order_id)
+
+        print(f"\nBot: {result}")
+
+        chat_history.append(f"User: {user_query}")
+        chat_history.append(f"Bot: {result}")
+
+        continue
     
     # Store user message
     chat_history.append(f"User: {user_query}")
