@@ -1,30 +1,30 @@
-import json
-import re
 import chromadb
-import numpy as np
 import requests
+import re
 from sentence_transformers import SentenceTransformer
 
-from tools import track_order
+from tools import track_order, check_refund
+
 
 # Load embedding model
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-# Connect to Chroma
+
+# Connect to Chroma DB
 client = chromadb.PersistentClient(path="../db")
 
-# Load collection
 collection = client.get_collection(
     name="support_faqs"
 )
 
+
+# Short-term conversation memory
 chat_history = []
 
+
 def search_knowledge_base(query, top_k=2):
-    # Convert query into vector
     query_embedding = model.encode([query]).tolist()
 
-    # Search Chroma
     results = collection.query(
         query_embeddings=query_embedding,
         n_results=top_k
@@ -37,14 +37,16 @@ def ask_llm(context, question):
     prompt = f"""
 You are a customer support assistant.
 
-Answer ONLY using the context below.
-If the answer is not found, say:
+Rules:
+1. Use FAQ context first.
+2. Use conversation history to understand follow-up questions.
+3. If answer is not found, say:
 "I don't have that information."
 
 Context:
 {context}
 
-Question:
+Current Question:
 {question}
 
 Answer:
@@ -68,50 +70,96 @@ while True:
     if user_query.lower() in ["exit", "quit"]:
         break
 
-    # Tool detection for order tracking
-    if "ORD" in user_query.upper():
-        words = user_query.split()
+    # Save user message
+    chat_history.append(f"User: {user_query}")
 
-    order_id = None
+    # --------------------------
+    # Refund tool
+    # --------------------------
+    if "refund" in user_query.lower():
 
-    match = re.search(r'ORD\d+', user_query.upper())
+        match = re.search(
+            r'ORD\d+',
+            user_query.upper()
+        )
+
+        if match:
+            order_id = match.group()
+
+            result = check_refund(
+                order_id
+            )
+
+            print(
+                f"\nBot: {result}"
+            )
+
+            chat_history.append(
+                f"Bot: {result}"
+            )
+
+            continue
+
+    # --------------------------
+    # Order tracking tool
+    # --------------------------
+    match = re.search(
+        r'ORD\d+',
+        user_query.upper()
+    )
 
     if match:
         order_id = match.group()
-        print("requested order id:"+order_id)
-        result = track_order(order_id)
 
-        print(f"\nBot: {result}")
+        result = track_order(
+            order_id
+        )
 
-        chat_history.append(f"User: {user_query}")
-        chat_history.append(f"Bot: {result}")
+        print(
+            f"\nBot: {result}"
+        )
+
+        chat_history.append(
+            f"Bot: {result}"
+        )
 
         continue
-    
-    # Store user message
-    chat_history.append(f"User: {user_query}")
 
-    # Retrieve FAQ context
-    retrieved_docs = search_knowledge_base(user_query)
+    # --------------------------
+    # FAQ Retrieval + Memory
+    # --------------------------
+    retrieved_docs = search_knowledge_base(
+        user_query
+    )
 
-    faq_context = "\n".join(retrieved_docs)
+    faq_context = "\n".join(
+        retrieved_docs
+    )
 
-    # Keep recent conversation only ( last 6 conversations )
-    memory_context = "\n".join(chat_history[-6:])
+    # Keep recent memory only
+    memory_context = "\n".join(
+        chat_history[-6:]
+    )
 
-    # Combine FAQ + conversation memory
+    # Combine FAQ + memory
     full_context = f"""
+FAQ Context:
+{faq_context}
 
-    FAQ Context:
-    {faq_context}
+Conversation History:
+{memory_context}
+"""
 
-    Conversation History:
-    {memory_context}
-    """     
+    answer = ask_llm(
+        full_context,
+        user_query
+    )
 
-    answer = ask_llm(full_context, user_query)
+    print(
+        f"\nBot: {answer}"
+    )
 
-    print("\nBot:", answer)
-
-    # Store bot response
-    chat_history.append(f"Bot: {answer}")
+    # Save bot response
+    chat_history.append(
+        f"Bot: {answer}"
+    )
