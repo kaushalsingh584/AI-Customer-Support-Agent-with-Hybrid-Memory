@@ -1,0 +1,13 @@
+Ticket Creation Test Cases
+
+1.
+User: I want to talk to a human.
+Bot: Support ticket created successfully. Ticket ID: TKT001
+
+2.
+User: I have a complaint regarding my order.
+Bot: Support ticket created successfully. Ticket ID: TKT002
+
+3.
+User: I am facing a problem with my product.
+Bot: Support ticket created successfully. Ticket ID: TKT003

@@ -2,6 +2,7 @@ import chromadb
 import requests
 import re
 from sentence_transformers import SentenceTransformer
+from tools import track_order, check_refund, create_ticket
 
 from tools import track_order, check_refund
 
@@ -113,6 +114,21 @@ while True:
 
         result = track_order(
             order_id
+        )
+
+        print(
+            f"\nBot: {result}"
+        )
+
+        chat_history.append(
+            f"Bot: {result}"
+        )
+
+        continue
+
+    if any(phrase in user_query.lower()  for phrase in [ "human", "agent", "complaint", "issue", "problem", "damaged"]):
+        result = create_ticket(
+            user_query
         )
 
         print(

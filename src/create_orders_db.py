@@ -23,7 +23,15 @@ cursor.executemany(
     orders
 )
 
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS tickets (
+    ticket_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    issue TEXT
+)
+""")
+
 conn.commit()
 conn.close()
 
 print("Orders database updated!")
+

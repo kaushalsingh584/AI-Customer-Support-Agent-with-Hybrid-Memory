@@ -45,3 +45,25 @@ def check_refund(order_id):
         return f"Order {order_id} is eligible for refund."
 
     return f"Order {order_id} is not eligible for refund."
+
+
+
+def create_ticket(issue):
+    conn = sqlite3.connect("../data/orders.db")
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO tickets (issue)
+        VALUES (?)
+        """,
+        (issue,)
+    )
+
+    ticket_id = cursor.lastrowid
+
+    conn.commit()
+    conn.close()
+
+    return f"Support ticket created successfully. Ticket ID: TKT{ticket_id:03}"
