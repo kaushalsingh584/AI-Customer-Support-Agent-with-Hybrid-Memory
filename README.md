@@ -1,8 +1,8 @@
 # AI Customer Support Agent
 
-An AI-powered customer support chatbot built using Retrieval-Augmented Generation (RAG), vector embeddings, and local LLMs.
+An AI-powered customer support agent built using Retrieval-Augmented Generation (RAG), vector embeddings, tool calling, and persistent memory.
 
-This project allows users to ask customer support questions in natural language. The system retrieves relevant FAQs from a vector database and generates human-like responses.
+This project allows users to ask customer support questions in natural language. The system retrieves relevant FAQs from a vector database, performs business actions using tools, and remembers previous conversations across sessions.
 
 ---
 
@@ -13,6 +13,10 @@ This project allows users to ask customer support questions in natural language.
 * Vector database integration using Chroma
 * Local LLM inference using Ollama
 * Hallucination control (answers only from provided context)
+* Order tracking tool
+* Refund eligibility checking
+* Support ticket creation
+* Persistent cross-session memory
 * Built with zero paid APIs
 
 ---
@@ -29,6 +33,10 @@ This project allows users to ask customer support questions in natural language.
 
 * Chroma
 
+### Business Database
+
+* SQLite
+
 ### Model
 
 * Llama 3
@@ -37,15 +45,28 @@ This project allows users to ask customer support questions in natural language.
 
 ## Project Architecture
 
-User Query
-↓
-Embedding Generation
-↓
-Semantic Search in Chroma
-↓
-Relevant FAQ Retrieval
-↓
-Response Generation using LLM
+User Query  
+↓  
+Intent Detection  
+↓  
+Route to Tool OR Knowledge Base  
+↓  
+
+If FAQ Query:
+
+Embedding Generation  
+↓  
+Semantic Search in Chroma  
+↓  
+Relevant FAQ Retrieval  
+↓  
+Response Generation using LLM  
+
+If Action Query:
+
+Tool Execution (SQLite)  
+↓  
+Business Response Returned  
 
 ---
 
@@ -55,16 +76,21 @@ Response Generation using LLM
 ai-support-agent/
 │
 ├── data/
-│   └── faq.json
+│   ├── faq.json
+│   └── orders.db
 │
 ├── db/
 │
 ├── src/
 │   ├── ingest.py
 │   ├── chatbot.py
+│   ├── tools.py
+│   ├── create_orders_db.py
 │   └── view_db.py
 │
 ├── venv/
+│
+├── requirements.txt
 │
 └── README.md
 ```
@@ -107,7 +133,7 @@ source venv/bin/activate
 ### 3. Install dependencies
 
 ```bash
-pip install chromadb sentence-transformers requests
+pip install -r requirements.txt
 ```
 
 ---
@@ -143,10 +169,24 @@ Example:
 
 ---
 
-### 6. Build knowledge base
+### 6. Create business database
 
 ```bash
 cd src
+python create_orders_db.py
+```
+
+This creates:
+
+* Orders table
+* Tickets table
+* Memory table
+
+---
+
+### 7. Build knowledge base
+
+```bash
 python ingest.py
 ```
 
@@ -154,7 +194,7 @@ This creates vector embeddings and stores them in Chroma.
 
 ---
 
-### 7. Run chatbot
+### 8. Run chatbot
 
 Make sure Ollama is running:
 
@@ -172,11 +212,29 @@ python chatbot.py
 
 ## Example Queries
 
-Try asking:
+### FAQ Retrieval
 
-* How can I get my money back?
-* Where can I track my package?
+* What is your refund policy?
 * How long does delivery take?
+
+### Order Tracking
+
+* Track my order ORD123
+* Where is ORD456?
+
+### Refund Check
+
+* Can I get a refund for ORD123?
+
+### Ticket Creation
+
+* I want to talk to a human
+* My product is damaged
+
+### Persistent Memory
+
+* What issue did I report earlier?
+* What happened with my order?
 
 ---
 
@@ -191,16 +249,27 @@ Try asking:
 
 ### Phase 2: Conversation Memory
 
-* [ ] In progress
+* [x] Session memory
+
+### Phase 3: Tool Calling
+
+* [x] Order tracking
+* [x] Refund eligibility
+* [x] Ticket creation
+
+### Phase 4: Persistent Memory
+
+* [x] Cross-session memory using SQLite
 
 ---
 
 ## Future Enhancements
 
-* Conversation memory
-* Long-term user memory
-* Tool calling (Order tracking, Refund APIs)
-* Human escalation workflow
+* Multi-agent architecture
+* User authentication
+* Web UI
+* Real order APIs
+* Analytics dashboard
 
 ---
 
@@ -212,4 +281,7 @@ This project demonstrates:
 * Vector embeddings
 * Semantic search
 * Vector databases
+* Tool calling
+* Persistent memory systems
 * Local LLM deployment
+* AI agent architecture
