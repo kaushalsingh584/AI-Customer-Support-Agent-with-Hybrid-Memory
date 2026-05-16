@@ -1,0 +1,33 @@
+Persistent Memory Test Cases
+
+Test 1:
+
+User: My order ORD123 is delayed.
+Bot: Order ORD123: Out for delivery
+
+(Exit chatbot)
+
+User: What happened with my order?
+Bot: Should remember earlier order discussion
+
+
+Test 2:
+
+User: I want a refund for ORD123.
+Bot: Order ORD123 is eligible for refund.
+
+(Exit chatbot)
+
+User: Can you remind me about my refund?
+Bot: Should remember previous refund discussion
+
+
+Test 3:
+
+User: I have a damaged product.
+Bot: Support ticket created successfully. Ticket ID: TKT001
+
+(Exit chatbot)
+
+User: What issue did I report earlier?
+Bot: Should remember your earlier complaint

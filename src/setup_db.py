@@ -30,6 +30,14 @@ CREATE TABLE IF NOT EXISTS tickets (
 )
 """)
 
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS memory (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT,
+    message TEXT
+)
+""")
+
 conn.commit()
 conn.close()
 

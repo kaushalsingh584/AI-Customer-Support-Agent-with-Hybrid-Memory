@@ -2,9 +2,14 @@ import chromadb
 import requests
 import re
 from sentence_transformers import SentenceTransformer
-from tools import track_order, check_refund, create_ticket
 
-from tools import track_order, check_refund
+from tools import (
+    track_order,
+    check_refund,
+    create_ticket,
+    save_memory,
+    get_memory
+)
 
 
 # Load embedding model
@@ -19,8 +24,8 @@ collection = client.get_collection(
 )
 
 
-# Short-term conversation memory
-chat_history = []
+# Current user
+USER_ID = "default_user"
 
 
 def search_knowledge_base(query, top_k=2):
@@ -71,8 +76,11 @@ while True:
     if user_query.lower() in ["exit", "quit"]:
         break
 
-    # Save user message
-    chat_history.append(f"User: {user_query}")
+    # Save user query to persistent memory
+    save_memory(
+        USER_ID,
+        f"User: {user_query}"
+    )
 
     # --------------------------
     # Refund tool
@@ -95,7 +103,8 @@ while True:
                 f"\nBot: {result}"
             )
 
-            chat_history.append(
+            save_memory(
+                USER_ID,
                 f"Bot: {result}"
             )
 
@@ -120,13 +129,29 @@ while True:
             f"\nBot: {result}"
         )
 
-        chat_history.append(
+        save_memory(
+            USER_ID,
             f"Bot: {result}"
         )
 
         continue
 
-    if any(phrase in user_query.lower()  for phrase in [ "human", "agent", "complaint", "issue", "problem", "damaged"]):
+    # --------------------------
+    # Ticket creation tool
+    # --------------------------
+    if any(
+        phrase in user_query.lower()
+        for phrase in [
+        "talk to human",
+        "talk to agent",
+        "raise complaint",
+        "create ticket",
+        "my product is damaged",
+        "i have a problem",
+        "damaged product"
+        ]
+    ):
+
         result = create_ticket(
             user_query
         )
@@ -135,7 +160,8 @@ while True:
             f"\nBot: {result}"
         )
 
-        chat_history.append(
+        save_memory(
+            USER_ID,
             f"Bot: {result}"
         )
 
@@ -152,9 +178,9 @@ while True:
         retrieved_docs
     )
 
-    # Keep recent memory only
+    # Load previous persistent memory
     memory_context = "\n".join(
-        chat_history[-6:]
+        get_memory(USER_ID)
     )
 
     # Combine FAQ + memory
@@ -176,6 +202,7 @@ Conversation History:
     )
 
     # Save bot response
-    chat_history.append(
+    save_memory(
+        USER_ID,
         f"Bot: {answer}"
     )

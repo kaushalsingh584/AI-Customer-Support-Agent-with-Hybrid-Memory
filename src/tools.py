@@ -67,3 +67,45 @@ def create_ticket(issue):
     conn.close()
 
     return f"Support ticket created successfully. Ticket ID: TKT{ticket_id:03}"
+
+def save_memory(user_id, message):
+    conn = sqlite3.connect("../data/orders.db")
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO memory (user_id, message)
+        VALUES (?, ?)
+        """,
+        (user_id, message)
+    )
+
+    conn.commit()
+    conn.close()
+
+
+def get_memory(user_id, limit=6):
+    conn = sqlite3.connect("../data/orders.db")
+
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT message
+        FROM memory
+        WHERE user_id = ?
+        ORDER BY id DESC
+        LIMIT ?
+        """,
+        (user_id, limit)
+    )
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    # Reverse so oldest appears first
+    messages = [row[0] for row in reversed(rows)]
+
+    return messages
