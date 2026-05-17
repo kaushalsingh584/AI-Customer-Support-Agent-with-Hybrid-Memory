@@ -1,0 +1,42 @@
+Multi-Agent Routing Test Cases
+
+1. FAQ Agent
+
+User: What is your refund policy?
+Expected Routing: faq_agent
+Expected Bot Response: Refunds are available within 7 days.
+
+
+2. Order Agent
+
+User: Track my order ORD123
+Expected Routing: order_agent
+Expected Bot Response: Order ORD123: Out for delivery
+
+
+3. Order Agent
+
+User: Can I get a refund for ORD123?
+Expected Routing: order_agent
+Expected Bot Response: Order ORD123 is eligible for refund.
+
+
+4. Escalation Agent
+
+User: I want to talk to a human.
+Expected Routing: escalation_agent
+Expected Bot Response: Support ticket created successfully. Ticket ID: TKT001
+
+
+5. Escalation Agent
+
+User: My product is damaged.
+Expected Routing: escalation_agent
+Expected Bot Response: Support ticket created successfully. Ticket ID: TKT002
+
+
+6. FAQ Agent + Memory
+
+User: What issue did I report earlier?
+Expected Routing: faq_agent
+Expected Bot Response: Should recall previous complaint from memory

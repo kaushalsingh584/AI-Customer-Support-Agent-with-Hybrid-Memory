@@ -2,7 +2,6 @@ import chromadb
 import requests
 import re
 from sentence_transformers import SentenceTransformer
-
 from tools import (
     track_order,
     check_refund,
@@ -10,7 +9,7 @@ from tools import (
     save_memory,
     get_memory
 )
-
+from agents import route_query
 
 # Load embedding model
 model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -82,11 +81,41 @@ while True:
         f"User: {user_query}"
     )
 
+    agent_type = route_query(user_query)
+
     # --------------------------
     # Refund tool
     # --------------------------
-    if "refund" in user_query.lower():
+    if agent_type == "order_agent":
+        if "refund" in user_query.lower():
 
+            match = re.search(
+                r'ORD\d+',
+                user_query.upper()
+            )
+
+            if match:
+                order_id = match.group()
+
+                result = check_refund(
+                    order_id
+                )
+
+                print(
+                    f"\nBot: {result}"
+                )
+
+                save_memory(
+                    USER_ID,
+                    f"Bot: {result}"
+                )
+
+                continue
+
+        # --------------------------
+        # Order tracking tool
+        # --------------------------
+        
         match = re.search(
             r'ORD\d+',
             user_query.upper()
@@ -95,7 +124,7 @@ while True:
         if match:
             order_id = match.group()
 
-            result = check_refund(
+            result = track_order(
                 order_id
             )
 
@@ -111,61 +140,36 @@ while True:
             continue
 
     # --------------------------
-    # Order tracking tool
-    # --------------------------
-    match = re.search(
-        r'ORD\d+',
-        user_query.upper()
-    )
-
-    if match:
-        order_id = match.group()
-
-        result = track_order(
-            order_id
-        )
-
-        print(
-            f"\nBot: {result}"
-        )
-
-        save_memory(
-            USER_ID,
-            f"Bot: {result}"
-        )
-
-        continue
-
-    # --------------------------
     # Ticket creation tool
     # --------------------------
-    if any(
-        phrase in user_query.lower()
-        for phrase in [
-        "talk to human",
-        "talk to agent",
-        "raise complaint",
-        "create ticket",
-        "my product is damaged",
-        "i have a problem",
-        "damaged product"
-        ]
-    ):
+    if agent_type == "escalation_agent":
+        if any(
+            phrase in user_query.lower()
+            for phrase in [
+            "talk to human",
+            "talk to agent",
+            "raise complaint",
+            "create ticket",
+            "my product is damaged",
+            "i have a problem",
+            "damaged product"
+            ]
+        ):
 
-        result = create_ticket(
-            user_query
-        )
+            result = create_ticket(
+                user_query
+            )
 
-        print(
-            f"\nBot: {result}"
-        )
+            print(
+                f"\nBot: {result}"
+            )
 
-        save_memory(
-            USER_ID,
-            f"Bot: {result}"
-        )
+            save_memory(
+                USER_ID,
+                f"Bot: {result}"
+            )
 
-        continue
+            continue
 
     # --------------------------
     # FAQ Retrieval + Memory
